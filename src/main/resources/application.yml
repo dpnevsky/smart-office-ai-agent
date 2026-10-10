@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: smart-office-ai-agent
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartoffice}
+    username: ${DB_USER:smartoffice}
+    password: ${DB_PASSWORD:smartoffice}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+server:
+  port: ${SERVER_PORT:8080}
+
+gigachat:
+  auth-key: ${GIGACHAT_AUTH_KEY:}
+  model: ${GIGACHAT_MODEL:GigaChat-Pro}
+  verify-ssl: ${GIGACHAT_VERIFY_SSL:false}
+  log-requests: ${GIGACHAT_LOG_REQUESTS:false}
+  log-responses: ${GIGACHAT_LOG_RESPONSES:false}
+
+app:
+  rag:
+    enabled: ${RAG_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Office AI Agent</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f5f7fa; color: #17202a; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,.07); }
+        #chat { min-height: 340px; max-height: 560px; overflow-y: auto; padding: 10px 0; }
+        .msg { margin: 12px 0; padding: 12px 14px; border-radius: 12px; white-space: pre-wrap; }
+        .user { background: #e8f1ff; margin-left: 15%; }
+        .agent { background: #eef7ee; margin-right: 15%; }
+        .tools { font-size: 12px; color: #667; margin-top: 6px; }
+        form { display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccd3db; border-radius: 10px; font-size: 16px; }
+        button { padding: 12px 18px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .hint { color: #59636e; font-size: 14px; line-height: 1.5; }
+        code { background: #eef1f4; padding: 2px 5px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Smart Office AI Agent</h1>
+    <p class="hint">
+        Попробуй: <code>Найди переговорную на 6 человек завтра с 14:00 до 15:00 и забронируй</code>.
+        Агент сначала подготовит бронь и попросит подтверждение. Следующим сообщением напиши <code>Да, подтверждаю</code>.
+    </p>
+    <div id="chat"></div>
+    <form id="form">
+        <input id="message" autocomplete="off" placeholder="Сообщение агенту..." required>
+        <button type="submit">Отправить</button>
+    </form>
+</div>
+<script>
+    const sessionId = localStorage.getItem('smartOfficeSession') || crypto.randomUUID();
+    localStorage.setItem('smartOfficeSession', sessionId);
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('form');
+    const input = document.getElementById('message');
+
+    function add(text, cls, tools = []) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + cls;
+        div.textContent = text;
+        if (tools.length) {
+            const t = document.createElement('div');
+            t.className = 'tools';
+            t.textContent = 'Tools: ' + tools.join(', ');
+            div.appendChild(t);
+        }
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = input.value.trim();
+        if (!message) return;
+        input.value = '';
+        add(message, 'user');
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sessionId, message})
+            });
+            const body = await response.json();
+            if (!response.ok) throw new Error(body.error || 'Ошибка');
+            add(body.answer, 'agent', body.executedTools || []);
+        } catch (e) {
+            add('Ошибка: ' + e.message, 'agent');
+        }
+    });
+</script>
+</body>
+</html>

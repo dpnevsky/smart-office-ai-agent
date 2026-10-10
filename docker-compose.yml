@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: smartoffice
+      POSTGRES_USER: smartoffice
+      POSTGRES_PASSWORD: smartoffice
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartoffice -d smartoffice"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - smartoffice_pg:/var/lib/postgresql/data
+
+  app:
+    profiles: ["full"]
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/smartoffice
+      DB_USER: smartoffice
+      DB_PASSWORD: smartoffice
+      GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat-Pro}
+      GIGACHAT_VERIFY_SSL: ${GIGACHAT_VERIFY_SSL:-false}
+      RAG_ENABLED: ${RAG_ENABLED:-false}
+    ports:
+      - "8080:8080"
+
+volumes:
+  smartoffice_pg:
